@@ -15,7 +15,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/1.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/1.mp3",
           url: "https://www.youtube.com/watch?v=z3wAjJXbYzA",
-          favorited: false
+          favorited: false,
         },
         {
           name: "Everybody Knows",
@@ -23,7 +23,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/2.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/2.mp3",
           url: "https://www.youtube.com/watch?v=Lin-a2lTelg",
-          favorited: true
+          favorited: true,
         },
         {
           name: "Extreme Ways",
@@ -31,7 +31,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/3.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/3.mp3",
           url: "https://www.youtube.com/watch?v=ICjyAe9S54c",
-          favorited: false
+          favorited: false,
         },
         {
           name: "Butterflies",
@@ -39,7 +39,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/4.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/4.mp3",
           url: "https://www.youtube.com/watch?v=kYgGwWYOd9Y",
-          favorited: false
+          favorited: false,
         },
         {
           name: "The Final Victory",
@@ -47,7 +47,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/5.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/5.mp3",
           url: "https://www.youtube.com/watch?v=0WlpALnQdN8",
-          favorited: true
+          favorited: true,
         },
         {
           name: "Genius ft. Sia, Diplo, Labrinth",
@@ -55,7 +55,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/6.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/6.mp3",
           url: "https://www.youtube.com/watch?v=HhoATZ1Imtw",
-          favorited: false
+          favorited: false,
         },
         {
           name: "The Comeback Kid",
@@ -63,7 +63,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/7.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/7.mp3",
           url: "https://www.youtube.com/watch?v=me6aoX0wCV8",
-          favorited: true
+          favorited: true,
         },
         {
           name: "Overdose",
@@ -71,7 +71,7 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/8.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/8.mp3",
           url: "https://www.youtube.com/watch?v=00-Rl3Jlx-o",
-          favorited: false
+          favorited: false,
         },
         {
           name: "Rag'n'Bone Man",
@@ -79,12 +79,12 @@ new Vue({
           cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/9.jpg",
           source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/9.mp3",
           url: "https://www.youtube.com/watch?v=L3wKzyIN1yk",
-          favorited: false
-        }
+          favorited: false,
+        },
       ],
       currentTrack: null,
       currentTrackIndex: 0,
-      transitionName: null
+      transitionName: null,
     };
   },
   methods: {
@@ -101,10 +101,10 @@ new Vue({
       let width = (100 / this.audio.duration) * this.audio.currentTime;
       this.barWidth = width + "%";
       this.circleLeft = width + "%";
-      let durmin = Math.floor(this.audio.duration / 60);
-      let dursec = Math.floor(this.audio.duration - durmin * 60);
-      let curmin = Math.floor(this.audio.currentTime / 60);
-      let cursec = Math.floor(this.audio.currentTime - curmin * 60);
+      let durmin = Math.floor(this.audio.duration / 60) || 0;
+      let dursec = Math.floor(this.audio.duration - durmin * 60) || 0;
+      let curmin = Math.floor(this.audio.currentTime / 60) || 0;
+      let cursec = Math.floor(this.audio.currentTime - curmin * 60) || 0;
       if (durmin < 10) {
         durmin = "0" + durmin;
       }
@@ -169,7 +169,7 @@ new Vue({
       this.audio.currentTime = 0;
       this.audio.src = this.currentTrack.source;
       setTimeout(() => {
-        if(this.isTimerPlaying) {
+        if (this.isTimerPlaying) {
           this.audio.play();
         } else {
           this.audio.pause();
@@ -177,23 +177,64 @@ new Vue({
       }, 300);
     },
     favorite() {
-      this.tracks[this.currentTrackIndex].favorited = !this.tracks[
-        this.currentTrackIndex
-      ].favorited;
-    }
+      this.tracks[this.currentTrackIndex].favorited =
+        !this.tracks[this.currentTrackIndex].favorited;
+    },
+  },
+  onBeforeUnmount() {
+    localStorage.setItem("tracks", JSON.stringify(this.tracks));
   },
   created() {
+    // 进入项目首先检测地址栏的参数，是否包含歌曲信息，如果存在，则插入到当前播放列表中，并播放
+    // 检测 URL 参数
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const songName = params.get("name");
+    const artist = params.get("artist");
+    const cover = params.get("cover");
+    const source = params.get("source");
+    // 取出本地缓存中的数据，赋值给播放列表
+    const localTracks = localStorage.getItem("tracks");
+    if (localTracks) {
+      this.tracks = JSON.parse(localTracks);
+    } else {
+      // 默认播放列表
+      this.tracks = [
+        {
+          name: "Mekanın Sahibi",
+          artist: "Norm Ender",
+          cover: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/img/1.jpg",
+          source: "https://raw.githubusercontent.com/muhammederdem/mini-player/master/mp3/1.mp3",
+          url: "https://www.youtube.com/watch?v=z3wAjJXbYzA",
+          favorited: false,
+        },
+      ];
+    }
+    if (songName && artist && cover && source) {
+      this.tracks = this.tracks.filter((track) => track.source !== source);
+      // 放第一个
+      this.tracks.unshift({
+        name: songName,
+        artist: artist,
+        cover: cover,
+        source: source,
+        favorited: false,
+      });
+      // 过滤重复的歌曲 根据资源路径判别
+      // 将播放列表数据存储到本地缓存
+      localStorage.setItem("tracks", JSON.stringify(this.tracks));
+    }
+
     let vm = this;
     this.currentTrack = this.tracks[0];
     this.audio = new Audio();
     this.audio.src = this.currentTrack.source;
-    this.audio.ontimeupdate = function() {
+    this.audio.ontimeupdate = function () {
       vm.generateTime();
     };
-    this.audio.onloadedmetadata = function() {
+    this.audio.onloadedmetadata = function () {
       vm.generateTime();
     };
-    this.audio.onended = function() {
+    this.audio.onended = function () {
       vm.nextTrack();
       this.isTimerPlaying = true;
     };
@@ -201,11 +242,11 @@ new Vue({
     // this is optional (for preload covers)
     for (let index = 0; index < this.tracks.length; index++) {
       const element = this.tracks[index];
-      let link = document.createElement('link');
+      let link = document.createElement("link");
       link.rel = "prefetch";
       link.href = element.cover;
-      link.as = "image"
-      document.head.appendChild(link)
+      link.as = "image";
+      document.head.appendChild(link);
     }
-  }
+  },
 });
